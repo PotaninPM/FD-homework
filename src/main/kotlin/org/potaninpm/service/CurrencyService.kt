@@ -4,28 +4,33 @@ import org.potaninpm.model.Currency
 import org.potaninpm.model.CurrencyRequest
 import org.potaninpm.repository.CurrencyRepository
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 @Service
 class CurrencyService(private val currencyRepository: CurrencyRepository) {
 
     fun getAllCurrencies(): List<Currency> = currencyRepository.findAll()
 
-    fun getCurrencyById(id: String): Currency? = currencyRepository.findById(id)
+    fun getCurrencyById(id: String): Currency? = currencyRepository.findById(id).orElse(null)
 
     fun createCurrency(request: CurrencyRequest): Currency {
         val currency = Currency(
-            id = "",
+            id = UUID.randomUUID().toString(),
             name = request.name,
             baseCurrency = request.baseCurrency,
             priceChangeRange = request.priceChangeRange,
             description = request.description
         )
-        return currencyRepository.create(currency)
+        return currencyRepository.save(currency)
     }
 
     fun updateCurrency(id: String, request: CurrencyRequest): Currency? {
-        val existing = currencyRepository.findById(id) ?: return null
-        val updated = existing.copy(
+        if (!currencyRepository.existsById(id)) {
+            return null
+        }
+        
+        val updated = Currency(
+            id = id,
             name = request.name,
             baseCurrency = request.baseCurrency,
             priceChangeRange = request.priceChangeRange,
@@ -35,10 +40,10 @@ class CurrencyService(private val currencyRepository: CurrencyRepository) {
     }
 
     fun deleteCurrency(id: String): Boolean {
-        if (!currencyRepository.exists(id)) {
+        if (!currencyRepository.existsById(id)) {
             return false
         }
-        currencyRepository.delete(id)
+        currencyRepository.deleteById(id)
         return true
     }
 } 
